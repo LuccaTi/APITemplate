@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Service.API.Interfaces
+namespace APITemplate.Host.Interfaces
 {
-    public interface IApiService
+    public interface ITestService
     {
         public Task<object> Get();
     }

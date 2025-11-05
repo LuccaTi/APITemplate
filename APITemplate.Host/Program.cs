@@ -1,15 +1,13 @@
-
+using APITemplate.Host.Interfaces;
+using APITemplate.Host.Logging;
+using APITemplate.Host.Services;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Service.API.Controllers;
-using Service.API.Interfaces;
-using Service.API.Logging;
-using Service.API.Services;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace API.Host
+namespace APITemplate.Host
 {
     public class Program
     {
@@ -28,16 +26,16 @@ namespace API.Host
                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
-                string logDirectory = Path.Combine(apiBaseDirectory, builder.Configuration["API:LogDirectory"] ?? "logs").Replace(@"/", "\\");
+                string logDirectory = Path.Combine(apiBaseDirectory, builder.Configuration["Startup:LogDirectory"] ?? "logs").Replace(@"/", "\\");
                 Logger.InitLogger(logDirectory);
-                Logger.Info("Program.cs", "Main", "Configuração da API carregada, logger da API iniciado!");
+                Logger.Info("Program.cs", "Main", "Configuração da aplicação carregada, logger iniciado!");
 
                 builder.Host.UseSerilog();
 
-                builder.Services.AddScoped<IApiService, ApiService>();
+                builder.Services.AddScoped<ITestService, TestService>();
 
                 builder.Services.AddControllers();
-                bool useSwagger = Convert.ToBoolean(builder.Configuration["API:UseSwagger"]);
+                bool useSwagger = Convert.ToBoolean(builder.Configuration["Startup:UseSwagger"]);
                 if (useSwagger)
                 {
                     builder.Services.AddEndpointsApiExplorer();
@@ -65,9 +63,9 @@ namespace API.Host
                 app.MapControllers();
                 #endregion
 
-                Logger.Info("Program.cs", "Main", "Todos os parâmetros foram carregados, subindo a API...");
+                Logger.Info("Program.cs", "Main", "Todos os parâmetros foram carregados, subindo a aplicação...");
 
-                if (useSwagger)
+                if (useSwagger && !app.Environment.IsDevelopment())
                 {
                     // Troca para sempre usar https
                     app.Lifetime.ApplicationStarted.Register(() =>
@@ -90,13 +88,13 @@ namespace API.Host
 
                 app.Run();
 
-                Logger.Info("Program.cs", "Main", "Requisição para finalizar recebida, parando a API...");
-                Logger.Info("Program.cs", "Main", "API encerrada.");
+                Logger.Info("Program.cs", "Main", "Requisição para finalizar recebida, parando a aplicação...");
+                Logger.Info("Program.cs", "Main", "aplicação encerrada.");
             }
             catch (Exception ex)
             {
                 HandleStartupError(ex);
-                Console.WriteLine($"{DateTime.Now} - Erro ao iniciar a API: {ex}");
+                Console.WriteLine($"{DateTime.Now} - Erro ao iniciar a aplicação: {ex}");
                 Environment.Exit(1);
             }
         }
@@ -136,7 +134,7 @@ namespace API.Host
 
             string timeStamp = DateTime.Now.Date.ToString("yyyyMMdd");
             string file = Path.Combine(fatalErrorDirectory, $"{timeStamp}_ERROR_.txt");
-            string errorMsg = $"{DateTime.Now} - Erro ao iniciar a API: {exception.ToString()}{Environment.NewLine}";
+            string errorMsg = $"{DateTime.Now} - Erro ao iniciar a aplicação: {exception.ToString()}{Environment.NewLine}";
             File.AppendAllText(file, errorMsg);
         }
     }

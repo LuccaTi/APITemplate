@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using ILogger = Serilog.ILogger;
 
-namespace Service.API.Logging
+namespace APITemplate.Host.Logging
 {
     internal static class Logger
     {

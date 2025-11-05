@@ -402,5 +402,8 @@ FodyWeavers.xsd
 logs/
 StartupErrors/
 
+# Template configuration (local only)
+.template.config/
+
 # Arquivos HTTP de teste (opcional - descomente se quiser versioná-los)
 # *.http

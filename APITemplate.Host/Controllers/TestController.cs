@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Service.API.Interfaces;
-using Service.API.Logging;
+﻿using APITemplate.Host.Interfaces;
+using APITemplate.Host.Logging;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Service.API.Controllers
+namespace APITemplate.Host.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -10,10 +10,10 @@ namespace Service.API.Controllers
     {
         #region Atributes
         private const string _className = "TestController";
-        private readonly IApiService _apiService;
+        private readonly ITestService _apiService;
         #endregion
 
-        public TestController(IApiService apiService)
+        public TestController(ITestService apiService)
         {
             _apiService = apiService;
         }

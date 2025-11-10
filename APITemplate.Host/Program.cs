@@ -28,7 +28,7 @@ namespace APITemplate.Host
 
                 string logDirectory = Path.Combine(apiBaseDirectory, builder.Configuration["Startup:LogDirectory"] ?? "logs").Replace(@"/", "\\");
                 Logger.InitLogger(logDirectory);
-                Logger.Info("Program.cs", "Main", "Configuração da aplicação carregada, logger iniciado!");
+                Logger.Info("Program.cs", "Main", "Application configuration loaded, logger started!");
 
                 builder.Host.UseSerilog();
 
@@ -55,7 +55,7 @@ namespace APITemplate.Host
                     app.UseSwaggerUI();
                 }
 
-                // Automaticamente acessa o swagger ao clicar no link escutado (Now listening) - Console
+                // Automatically accesses swagger when clicking on the listened link (Now listening) - Console
                 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
                 app.UseHttpsRedirection();
@@ -63,11 +63,11 @@ namespace APITemplate.Host
                 app.MapControllers();
                 #endregion
 
-                Logger.Info("Program.cs", "Main", "Todos os parâmetros foram carregados, subindo a aplicação...");
+                Logger.Info("Program.cs", "Main", "All parameters have been loaded, starting the application...");
 
                 if (useSwagger && !app.Environment.IsDevelopment())
                 {
-                    // Troca para sempre usar https
+                    // Switch to always use https
                     app.Lifetime.ApplicationStarted.Register(() =>
                     {
                         var address = app.Urls.FirstOrDefault();
@@ -76,25 +76,25 @@ namespace APITemplate.Host
                             address = address.Replace("http://", "https://");
                         }
                         var swaggerUrl = $"{address}/swagger";
-                        Logger.Info("Program.cs", "Main", $"===== Abrindo navegador em: {swaggerUrl} =====");
+                        Logger.Info("Program.cs", "Main", $"===== Opening browser at: {swaggerUrl} =====");
 
                         OpenBrowser(swaggerUrl);
                     });
                 }
                 else
                 {
-                    Logger.Info("Program.cs", "Main", $"Swagger foi desabilitado!");
+                    Logger.Info("Program.cs", "Main", $"Swagger has been disabled!");
                 }
 
                 app.Run();
 
-                Logger.Info("Program.cs", "Main", "Requisição para finalizar recebida, parando a aplicação...");
-                Logger.Info("Program.cs", "Main", "aplicação encerrada.");
+                Logger.Info("Program.cs", "Main", "Request to terminate received, stopping the application...");
+                Logger.Info("Program.cs", "Main", "Application terminated.");
             }
             catch (Exception ex)
             {
                 HandleStartupError(ex);
-                Console.WriteLine($"{DateTime.Now} - Erro ao iniciar a aplicação: {ex}");
+                Console.WriteLine($"{DateTime.Now} - Error starting the application: {ex}");
                 Environment.Exit(1);
             }
         }
@@ -118,14 +118,14 @@ namespace APITemplate.Host
             }
             catch (Exception ex)
             {
-                Logger.Error("Program.cs", "OpenBrowser", $"Erro ao abrir navegador: {ex.Message}");
+                Logger.Error("Program.cs", "OpenBrowser", $"Error opening browser: {ex.Message}");
                 throw;
             }
         }
 
         private static void HandleStartupError(Exception exception)
         {
-            // Cria um arquivo devido a chance do Logger não ter sido iniciado
+            // Creates a file due to the chance that Logger has not been initialized
 
             string apiDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
             string fatalErrorDirectory = Path.Combine(apiDirectory, "StartupErrors");
@@ -134,7 +134,7 @@ namespace APITemplate.Host
 
             string timeStamp = DateTime.Now.Date.ToString("yyyyMMdd");
             string file = Path.Combine(fatalErrorDirectory, $"{timeStamp}_ERROR_.txt");
-            string errorMsg = $"{DateTime.Now} - Erro ao iniciar a aplicação: {exception.ToString()}{Environment.NewLine}";
+            string errorMsg = $"{DateTime.Now} - Error starting the application: {exception.ToString()}{Environment.NewLine}";
             File.AppendAllText(file, errorMsg);
         }
     }

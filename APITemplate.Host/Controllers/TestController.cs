@@ -8,7 +8,7 @@ namespace APITemplate.Host.Controllers
     [Route("api/v1/[controller]")]
     public class TestController : ControllerBase
     {
-        #region Atributes
+        #region Attributes
         private const string _className = "TestController";
         private readonly ITestService _apiService;
         #endregion
@@ -28,7 +28,7 @@ namespace APITemplate.Host.Controllers
             }
             catch (Exception ex)
             {
-                Logger.Error(_className, "Get", $"Erro ao processar requisição: {ex.Message}");
+                Logger.Error(_className, "Get", $"Error processing request: {ex.Message}");
                 return BadRequest(ex);
             }
         }

@@ -5,13 +5,13 @@ namespace APITemplate.Host.Services
 {
     internal class TestService : ITestService
     {
-        #region Atributes
+        #region Attributes
         private const string className = "TestService";
         #endregion
 
         public Task<object> Get()
         {
-            return Task.FromResult<object>(new { message = "Aplicação está funcionando!" });
+            return Task.FromResult<object>(new { message = "Application is working!" });
         }
     }
 }

@@ -28,7 +28,7 @@ namespace APITemplate.Host
 
                 string logDirectory = Path.Combine(apiBaseDirectory, builder.Configuration["Startup:LogDirectory"] ?? "logs").Replace(@"/", "\\");
                 Logger.InitLogger(logDirectory);
-                Logger.Info("Program.cs", "Main", "Application configuration loaded, logger started!");
+                Logger.Info("Application configuration loaded, logger started!");
 
                 builder.Host.UseSerilog();
 
@@ -63,7 +63,7 @@ namespace APITemplate.Host
                 app.MapControllers();
                 #endregion
 
-                Logger.Info("Program.cs", "Main", "All parameters have been loaded, starting the application...");
+                Logger.Info("All parameters have been loaded, starting the application...");
 
                 if (useSwagger && !app.Environment.IsDevelopment())
                 {
@@ -76,20 +76,20 @@ namespace APITemplate.Host
                             address = address.Replace("http://", "https://");
                         }
                         var swaggerUrl = $"{address}/swagger";
-                        Logger.Info("Program.cs", "Main", $"===== Opening browser at: {swaggerUrl} =====");
+                        Logger.Debug("Program.cs", "Main", $"===== Opening browser at: {swaggerUrl} =====");
 
                         OpenBrowser(swaggerUrl);
                     });
                 }
                 else
                 {
-                    Logger.Info("Program.cs", "Main", $"Swagger has been disabled!");
+                    Logger.Info("Swagger has been disabled!");
                 }
 
                 app.Run();
 
-                Logger.Info("Program.cs", "Main", "Request to terminate received, stopping the application...");
-                Logger.Info("Program.cs", "Main", "Application terminated.");
+                Logger.Info("Request to terminate received, stopping the application...");
+                Logger.Info("Application terminated.");
             }
             catch (Exception ex)
             {

@@ -48,11 +48,11 @@ namespace APITemplate.Host.Logging
                 throw;
             }
         }
-        internal static void Info(string className, string methodName, string message)
+        internal static void Info(string message)
         {
             try
             {
-                _logger!.Information($"{className} - {methodName} - {message}");
+                _logger!.Information(message);
             }
             catch (Exception)
             {

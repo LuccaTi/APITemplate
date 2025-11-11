@@ -6,7 +6,7 @@ Este repositório contém um template de API REST construída com ASP.NET Core (
 O propósito é criar um "esqueleto" que sirva como base para a criação de APIs que sigam um padrão tanto de implementação quanto de configuração e logging.
 
 Endpoint de exemplo disponível:
-- `GET /api/v1/test` → retorna `{ "message": "API is Working!" }`.
+- `GET /api/v1/test` → retorna `{ "message": "application is Working!" }`.
 
 ## Tecnologias e bibliotecas essenciais
 - .NET 8 (ASP.NET Core)
@@ -14,14 +14,14 @@ Endpoint de exemplo disponível:
 - Swashbuckle.AspNetCore (Swagger/OpenAPI)
 
 ## Estrutura do projeto
-- `API.Host/Program.cs`: ponto de entrada; configura DI, logging, controllers, Swagger e middlewares.
-- `API.Host/Controllers/`: controladores HTTP (ex.: `TestController.cs`).
-- `API.Host/Interfaces/`: contratos de serviços (ex.: `IApiService.cs`).
-- `API.Host/Services/`: implementação da regra de negócio (ex.: `ApiService.cs`).
-- `API.Host/Repositories/`: camada de acesso a dados (placeholder para futura implementação).
-- `API.Host/Logging/Logger.cs`: inicialização e wrappers do Serilog.
-- `API.Host/appsettings.json`: configurações da aplicação (Swagger, diretório de logs, níveis de log).
-- `API.Host/Properties/launchSettings.json`: perfis de execução locais (portas e ambiente).
+- `APITemplate.Host/Program.cs`: ponto de entrada; configura DI, logging, controllers, Swagger e middlewares.
+- `APITemplate.Host/Controllers/`: controladores HTTP (ex.: `TestController.cs`).
+- `APITemplate.Host/Interfaces/`: contratos de serviços (ex.: `ITestService.cs`).
+- `APITemplate.Host/Services/`: implementação da regra de negócio (ex.: `TestService.cs`).
+- `APITemplate.Host/Repositories/`: camada de acesso a dados (placeholder para futura implementação).
+- `APITemplate.Host/Logging/Logger.cs`: inicialização e wrappers do Serilog.
+- `APITemplate.Host/appsettings.json`: configurações da aplicação (Swagger, diretório de logs, níveis de log).
+- `APITemplate.Host/Properties/launchSettings.json`: perfis de execução locais (portas e ambiente).
 
 ## Arquitetura e padrões de projeto
 - Hospedagem e pipeline
@@ -30,7 +30,7 @@ Endpoint de exemplo disponível:
     - Swagger/UI habilitado condicionalmente via configuração.
 
 - Injeção de dependência
-    - `IApiService` → `ApiService` registrado como `Scoped`.
+    - `ITestService` → `TestService` registrado como `Scoped`.
     - Camadas separadas para facilitar testes e evolução.
 
 - Logging (Serilog)
@@ -41,14 +41,14 @@ Endpoint de exemplo disponível:
     - Exceções em endpoints são capturadas no controller e logadas antes de retornar `400 Bad Request`.
 
 ## Endpoints
-- `GET /api/v1/test`
-    - Resposta 200: `{ "message": "API is Working!" }`
+- `GET /api/v1/Test`
+    - Resposta 200: `{ "message": "application is Working!" }`
     - Resposta 400: detalhes do erro em caso de falha, com log registrado.
 
 ## Configuração
 
 ### appsettings.json
-Configurações principais da aplicação (seção `API`):
+Configurações principais da aplicação (seção `Startup`):
 - `UseSwagger` ("true" | "false"): habilita/desabilita o uso do swagger.
 - `LogDirectory` (string): pasta para gravação dos logs (relativa ao diretório base da aplicação).
 

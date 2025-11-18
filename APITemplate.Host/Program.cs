@@ -1,6 +1,10 @@
-using APITemplate.Host.Interfaces;
+using APITemplate.Host.Clients;
+using APITemplate.Host.Clients.Interfaces;
+using APITemplate.Host.Configuration;
 using APITemplate.Host.Logging;
 using APITemplate.Host.Services;
+using APITemplate.Host.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Diagnostics;
@@ -16,31 +20,34 @@ namespace APITemplate.Host
             try
             {
                 var builder = WebApplication.CreateBuilder(args);
+                ApiConfig.LoadConfig();
 
                 #region DI Container
 
-                string apiBaseDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
-
                 builder.Configuration
-                    .SetBasePath(apiBaseDirectory)
+                    .SetBasePath(ApiConfig.ApiBaseDirectory!)
                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
-                string logDirectory = Path.Combine(apiBaseDirectory, builder.Configuration["Startup:LogDirectory"] ?? "logs").Replace(@"/", "\\");
-                Logger.InitLogger(logDirectory);
-                Logger.Info("Application configuration loaded, logger started!");
+                builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
+                {
+                    client.BaseAddress = new Uri(ApiConfig.ClientUrl!);
+                    client.Timeout = TimeSpan.FromSeconds(ApiConfig.Timeout == 0 ? 30 : ApiConfig.Timeout);
+                    client.DefaultRequestHeaders.Add("Accept", "application/json");
+                });
+                Logger.Info("Clients added");
 
                 builder.Host.UseSerilog();
 
-                builder.Services.AddScoped<ITestService, TestService>();
+                builder.Services.AddScoped<IService, Service>();
+                Logger.Info("Dependencies injected");
+
+                builder.Services.AddAutoMapper(typeof(Program).Assembly);
+                Logger.Info("AutoMapper added");
 
                 builder.Services.AddControllers();
-                bool useSwagger = Convert.ToBoolean(builder.Configuration["Startup:UseSwagger"]);
-                if (useSwagger)
-                {
-                    builder.Services.AddEndpointsApiExplorer();
-                    builder.Services.AddSwaggerGen();
-                }
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen();
 
                 #endregion
 
@@ -48,12 +55,9 @@ namespace APITemplate.Host
 
                 #region Middleware
 
-                if (useSwagger)
-                {
-                    app.UseStaticFiles();
-                    app.UseSwagger();
-                    app.UseSwaggerUI();
-                }
+                app.UseStaticFiles();
+                app.UseSwagger();
+                app.UseSwaggerUI();
 
                 // Automatically accesses swagger when clicking on the listened link (Now listening) - Console
                 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
@@ -65,25 +69,27 @@ namespace APITemplate.Host
 
                 Logger.Info("All parameters have been loaded, starting the application...");
 
-                if (useSwagger && !app.Environment.IsDevelopment())
+                if (!app.Environment.IsDevelopment() && ApiConfig.UseSwaggerProduction)
                 {
-                    // Switch to always use https
+                    // Always switch to use https
                     app.Lifetime.ApplicationStarted.Register(() =>
                     {
                         var address = app.Urls.FirstOrDefault();
-                        if (address != null && address.StartsWith("http://"))
+                        if (address != null)
                         {
-                            address = address.Replace("http://", "https://");
+                            if (address.StartsWith("http://"))
+                            {
+                                address = address.Replace("http://", "https://");
+                            }
+
+                            address = address.Replace("0.0.0.0", "localhost");
                         }
+
                         var swaggerUrl = $"{address}/swagger";
-                        Logger.Debug("Program.cs", "Main", $"===== Opening browser at: {swaggerUrl} =====");
+                        Logger.Debug("Program.cs", "Main", $" ===== Now listening on: {swaggerUrl} ===== ");
 
                         OpenBrowser(swaggerUrl);
                     });
-                }
-                else
-                {
-                    Logger.Info("Swagger has been disabled!");
                 }
 
                 app.Run();

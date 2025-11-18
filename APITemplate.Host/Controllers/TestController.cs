@@ -1,5 +1,5 @@
-﻿using APITemplate.Host.Interfaces;
-using APITemplate.Host.Logging;
+﻿using APITemplate.Host.Logging;
+using APITemplate.Host.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APITemplate.Host.Controllers
@@ -10,26 +10,44 @@ namespace APITemplate.Host.Controllers
     {
         #region Attributes
         private const string _className = "TestController";
-        private readonly ITestService _apiService;
         #endregion
 
-        public TestController(ITestService apiService)
+        #region Dependencies
+        private readonly IService _service;
+        #endregion
+
+        public TestController(IService service)
         {
-            _apiService = apiService;
+            _service = service;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> GetAllAsync()
         {
             try
             {
-                var message = await _apiService.Get();
+                var message = await _service.GetAllAsync();
                 return Ok(message);
             }
             catch (Exception ex)
             {
-                Logger.Error(_className, "Get", $"Error processing request: {ex.Message}");
-                return BadRequest(ex);
+                Logger.Error(_className, "GetAllAsync", $"Error processing request: {ex.Message}");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByIdAsync(long id)
+        {
+            try
+            {
+                var message = await _service.GetByIdAsync(id);
+                return Ok(message);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(_className, "GetByIdAsync", $"Error processing request: {ex.Message}");
+                return BadRequest(ex.Message);
             }
         }
     }

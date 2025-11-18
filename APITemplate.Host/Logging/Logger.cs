@@ -26,7 +26,7 @@ namespace APITemplate.Host.Logging
                       retainedFileCountLimit: null, // Null keeps files indefinitely
                       shared: true // Allows real-time log writing monitoring
                       )
-                       .CreateLogger();
+                      .CreateLogger();
 
                 Log.Logger = _logger;
             }

@@ -10,18 +10,17 @@ Endpoint de exemplo disponível:
 
 ## Tecnologias e bibliotecas essenciais
 - .NET 8 (ASP.NET Core)
-- Serilog.AspNetCore (logging para console e arquivo)
+- HttpClient: Biblioteca que faz as requisições e os tratamentos Http.
 - Swashbuckle.AspNetCore (Swagger/OpenAPI)
+- AutoMapper: Biblioteca usada para mapear os objetos consumidos em objetos criados pela API.
+- Microsoft.Extensions.Configuration: Responsável por fazer leitura e escrita de arquivos de configuração.
+- Serilog: Responsável por fazer a escrita em arquivos de Log.
 
 ## Estrutura do projeto
-- `APITemplate.Host/Program.cs`: ponto de entrada; configura DI, logging, controllers, Swagger e middlewares.
-- `APITemplate.Host/Controllers/`: controladores HTTP (ex.: `TestController.cs`).
-- `APITemplate.Host/Interfaces/`: contratos de serviços (ex.: `ITestService.cs`).
-- `APITemplate.Host/Services/`: implementação da regra de negócio (ex.: `TestService.cs`).
-- `APITemplate.Host/Repositories/`: camada de acesso a dados (placeholder para futura implementação).
-- `APITemplate.Host/Logging/Logger.cs`: inicialização e wrappers do Serilog.
-- `APITemplate.Host/appsettings.json`: configurações da aplicação (Swagger, diretório de logs, níveis de log).
-- `APITemplate.Host/Properties/launchSettings.json`: perfis de execução locais (portas e ambiente).
+- `APITemplate.Host`:
+    - **Responsibilidade**: É o ponto de entrada executável (`.exe`). Ele monta e executa a aplicação.
+    - **Contém**: Todas as pastas das classes usadas pela API além do Program.cs com a configuração essencial para iniciar a aplicação.
+
 
 ## Arquitetura e padrões de projeto
 - Hospedagem e pipeline
@@ -30,7 +29,7 @@ Endpoint de exemplo disponível:
     - Swagger/UI habilitado condicionalmente via configuração.
 
 - Injeção de dependência
-    - `ITestService` → `TestService` registrado como `Scoped`.
+    - `IService.cs` → `Service.cs` registrado como `Scoped`.
     - Camadas separadas para facilitar testes e evolução.
 
 - Logging (Serilog)
@@ -44,13 +43,19 @@ Endpoint de exemplo disponível:
 - `GET /api/v1/Test`
     - Resposta 200: `{ "message": "application is Working!" }`
     - Resposta 400: detalhes do erro em caso de falha, com log registrado.
+- `GET /api/v1/Test/{id}`
+    - Resposta 200: `{ "message": "application is Working!" }`
+    - Resposta 400: detalhes do erro em caso de falha, com log registrado.
 
 ## Configuração
 
 ### appsettings.json
-Configurações principais da aplicação (seção `Startup`):
-- `UseSwagger` ("true" | "false"): habilita/desabilita o uso do swagger.
+Configurações principais da aplicação (seção `AppConfig`):
+- `UseSwaggerProduction` ("true" | "false"): habilita/desabilita o uso do swagger em produção (conveniência para testes).
+- `UseSerilog` ("true" | "false"): habilita/desabilita o serilog no console e nos arquivos de log.
 - `LogDirectory` (string): pasta para gravação dos logs (relativa ao diretório base da aplicação).
+- `ClientUrl` (string): URL base que será consumida pela API.
+- `Timeout` (int): Tempo de timeout das conexões.
 
 ### appsettings.Production.json
 Configuração específica para ambiente de produção:
@@ -63,4 +68,4 @@ Definidos em `API.Host/Properties/launchSettings.json`:
 - Ambiente padrão: `ASPNETCORE_ENVIRONMENT=Development`
 
 ## Uso da API
-A API pode ser usada via console ao compilar o código e usar o .exe dentro do terminal, dependendo da configuração do appsettings.json vai abrir ou não o swagger no navegador padrão da máquina, quando usada para desenvolvimento (Debug, IDE) também vai abrir automaticamente o navegador.
+A API pode ser usada via console ao compilar o código e usar o .exe dentro do terminal, vale tanto para uso Debug quanto Release.

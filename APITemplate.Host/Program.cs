@@ -1,7 +1,5 @@
 using APITemplate.Host.Clients;
 using APITemplate.Host.Clients.Interfaces;
-using APITemplate.Host.Configuration;
-using APITemplate.Host.Logging;
 using APITemplate.Host.Services;
 using APITemplate.Host.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,43 +15,62 @@ namespace APITemplate.Host
     {
         public static void Main(string[] args)
         {
+            var loggerConfiguration = new LoggerConfiguration()
+                .ReadFrom.Configuration(new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true)
+                .Build())
+                .Enrich.FromLogContext()
+                .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "logs/system_log_.txt"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: null,
+                shared: true);
+
+            Log.Logger = loggerConfiguration.CreateBootstrapLogger();
+            Log.Information("API Template, Starting up");
+
             try
             {
                 var builder = WebApplication.CreateBuilder(args);
-                ApiConfig.LoadConfig();
+
+                Log.Information("Configuring builder");
+                builder.Host.UseSerilog();
 
                 #region DI Container
 
-                builder.Configuration
-                    .SetBasePath(ApiConfig.ApiBaseDirectory!)
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                string? uri = builder.Configuration.GetValue<string>("AppConfig:ClientUrl");
+                if (string.IsNullOrEmpty(uri))
+                    throw new Exception("Client url has not been provided!");
+                int timeout = builder.Configuration.GetValue<int>("AppConfig:Timeout");
 
                 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
                 {
-                    client.BaseAddress = new Uri(ApiConfig.ClientUrl!);
-                    client.Timeout = TimeSpan.FromSeconds(ApiConfig.Timeout == 0 ? 30 : ApiConfig.Timeout);
+                    client.BaseAddress = new Uri(uri!);
+                    client.Timeout = TimeSpan.FromSeconds(timeout == 0 ? 30 : timeout);
                     client.DefaultRequestHeaders.Add("Accept", "application/json");
                 });
-                Logger.Info("Clients added");
-
-                builder.Host.UseSerilog();
+                Log.Information("Clients added");
 
                 builder.Services.AddScoped<IService, Service>();
-                Logger.Info("Dependencies injected");
+                Log.Information("Services scope added");
 
                 builder.Services.AddAutoMapper(typeof(Program).Assembly);
-                Logger.Info("AutoMapper added");
+                Log.Information("AutoMapper added");
 
                 builder.Services.AddControllers();
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
 
+                Log.Information("Dependencies injected");
+
                 #endregion
 
                 var app = builder.Build();
+                Log.Information("Builder configured and web application created");
 
                 #region Middleware
+
+                app.UseMiddleware<APITemplate.Host.Middleware.ExceptionHandlerMiddleware>();
+                Log.Debug("ExceptionHandlerMiddleware added");
 
                 app.UseStaticFiles();
                 app.UseSwagger();
@@ -67,9 +84,10 @@ namespace APITemplate.Host
                 app.MapControllers();
                 #endregion
 
-                Logger.Info("All parameters have been loaded, starting the application...");
+                Log.Information("All parameters have been loaded, starting the application...");
 
-                if (!app.Environment.IsDevelopment() && ApiConfig.UseSwaggerProduction)
+                var useSwaggerProduction = app.Configuration.GetValue<bool>("AppConfig:UseSwaggerProduction");
+                if (!app.Environment.IsDevelopment() && useSwaggerProduction)
                 {
                     // Always switch to use https
                     app.Lifetime.ApplicationStarted.Register(() =>
@@ -86,22 +104,25 @@ namespace APITemplate.Host
                         }
 
                         var swaggerUrl = $"{address}/swagger";
-                        Logger.Debug("Program.cs", "Main", $" ===== Now listening on: {swaggerUrl} ===== ");
-
+                        Log.Debug("Program.cs", "Main", $" ===== Now listening on: {swaggerUrl} ===== ");
                         OpenBrowser(swaggerUrl);
                     });
                 }
 
+                Log.Information("Running application...");
                 app.Run();
 
-                Logger.Info("Request to terminate received, stopping the application...");
-                Logger.Info("Application terminated.");
+                Log.Information("Request to terminate received, stopping the application...");
+                Log.Information("Application terminated.");
             }
             catch (Exception ex)
             {
-                HandleStartupError(ex);
-                Console.WriteLine($"{DateTime.Now} - Error starting the application: {ex}");
-                Environment.Exit(1);
+                Log.Fatal(ex, "Host terminated unexpectedly");
+                throw;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
             }
         }
 
@@ -124,24 +145,10 @@ namespace APITemplate.Host
             }
             catch (Exception ex)
             {
-                Logger.Error("Program.cs", "OpenBrowser", $"Error opening browser: {ex.Message}");
+                Log.Error("Program.cs", "OpenBrowser", $"Error opening browser: {ex.Message}");
                 throw;
             }
         }
 
-        private static void HandleStartupError(Exception exception)
-        {
-            // Creates a file due to the chance that Logger has not been initialized
-
-            string apiDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-            string fatalErrorDirectory = Path.Combine(apiDirectory, "StartupErrors");
-            if (!Directory.Exists(fatalErrorDirectory))
-                Directory.CreateDirectory(fatalErrorDirectory);
-
-            string timeStamp = DateTime.Now.Date.ToString("yyyyMMdd");
-            string file = Path.Combine(fatalErrorDirectory, $"{timeStamp}_ERROR_.txt");
-            string errorMsg = $"{DateTime.Now} - Error starting the application: {exception.ToString()}{Environment.NewLine}";
-            File.AppendAllText(file, errorMsg);
-        }
     }
 }

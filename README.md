@@ -6,7 +6,8 @@ Este repositório contém um template de API REST construída com ASP.NET Core (
 O propósito é criar um "esqueleto" que sirva como base para a criação de APIs que sigam um padrão tanto de implementação quanto de configuração e logging.
 
 Endpoint de exemplo disponível:
-- `GET /api/v1/test` → retorna `{ "message": "application is Working!" }`.
+- `GET /api/v1/test` → retorna uma lista de usuários da API de teste `jsonplaceholder.typicode.com`.
+- `GET /api/v1/test/{id}` → retorna um usuário específico da lista de teste.
 
 ## Tecnologias e bibliotecas essenciais
 - .NET 8 (ASP.NET Core)
@@ -18,14 +19,14 @@ Endpoint de exemplo disponível:
 
 ## Estrutura do projeto
 - `APITemplate.Host`:
-    - **Responsibilidade**: É o ponto de entrada executável (`.exe`). Ele monta e executa a aplicação.
+    - **Responsibilidade**: É o projeto ponto de entrada executável (`.exe`). Ele monta e executa a aplicação.
     - **Contém**: Todas as pastas das classes usadas pela API além do Program.cs com a configuração essencial para iniciar a aplicação.
 
 
 ## Arquitetura e padrões de projeto
 - Hospedagem e pipeline
     - Usa o `WebApplication` (minimal hosting) do ASP.NET Core.
-    - Middlewares: HTTPS redirection, Authorization (sem políticas ativas por padrão) e mapeamento de controllers.
+    - Middlewares: ExceptionHandlerMiddleware, HTTPS redirection, Authorization (sem políticas ativas por padrão) e mapeamento de controllers.
     - Swagger/UI habilitado condicionalmente via configuração.
 
 - Injeção de dependência
@@ -33,18 +34,18 @@ Endpoint de exemplo disponível:
     - Camadas separadas para facilitar testes e evolução.
 
 - Logging (Serilog)
-    - Logs em console e arquivo rolling diário em `logs/system_log_.txt` (diretório configurável).
-    - Em falhas na inicialização, um arquivo é escrito em `StartupErrors/` para garantir rastreabilidade mesmo antes do logger.
+    - Logs em console e arquivo rolling diário em `logs/system_log_.txt`, a pasta com os logs fica no diretório base da aplicação.
+    - Em falhas na inicialização, um arquivo é escrito pelo bootstrap logger para garantir rastreabilidade mesmo antes do logger oficial ser iniciado.
 
 - Tratamento de erros
-    - Exceções em endpoints são capturadas no controller e logadas antes de retornar `400 Bad Request`.
+    - Exceções em endpoints são capturadas pelo ExceptionHandlerMiddleware que analisa o status code da requisição e retorna a resposta adequada ao cliente.
 
 ## Endpoints
 - `GET /api/v1/Test`
-    - Resposta 200: `{ "message": "application is Working!" }`
+    - Resposta 200: `Lista de users`
     - Resposta 400: detalhes do erro em caso de falha, com log registrado.
 - `GET /api/v1/Test/{id}`
-    - Resposta 200: `{ "message": "application is Working!" }`
+    - Resposta 200: `User específico`
     - Resposta 400: detalhes do erro em caso de falha, com log registrado.
 
 ## Configuração
@@ -52,8 +53,6 @@ Endpoint de exemplo disponível:
 ### appsettings.json
 Configurações principais da aplicação (seção `AppConfig`):
 - `UseSwaggerProduction` ("true" | "false"): habilita/desabilita o uso do swagger em produção (conveniência para testes).
-- `UseSerilog` ("true" | "false"): habilita/desabilita o serilog no console e nos arquivos de log.
-- `LogDirectory` (string): pasta para gravação dos logs (relativa ao diretório base da aplicação).
 - `ClientUrl` (string): URL base que será consumida pela API.
 - `Timeout` (int): Tempo de timeout das conexões.
 
@@ -68,4 +67,4 @@ Definidos em `API.Host/Properties/launchSettings.json`:
 - Ambiente padrão: `ASPNETCORE_ENVIRONMENT=Development`
 
 ## Uso da API
-A API pode ser usada via console ao compilar o código e usar o .exe dentro do terminal, vale tanto para uso Debug quanto Release.
+A API pode ser usada via console ao compilar o código e usar o .exe dentro do terminal, vale tanto para uso em Debug quanto Release.
